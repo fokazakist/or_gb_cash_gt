@@ -162,11 +162,13 @@ const vector<Graph> readGraphs(std::istream&);
 
 struct DPat{//discrimination pattern
   std::string dfscode;//include string
+  Ctree* optimalplace;
   unsigned int size;
   vector<int> locsup;
   double gain;
-  bool new_node;
 };
+
+void update(DPat&);
 
 class Gspan {
  private:

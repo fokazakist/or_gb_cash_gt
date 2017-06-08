@@ -195,8 +195,9 @@ bool Gspan::can_prune(Ctree& node){
   double gain_abs = fabs(gain);
   if(gain_abs > fabs(opt_pat.gain) || (fabs(gain_abs - fabs(opt_pat.gain))<1e-10 && pattern.size() < opt_pat.size)){
     opt_pat.gain = gain;
+    opt_pat.optimalplace = &node;
     opt_pat.size = pattern.size();
-    opt_pat.new_node = true;
+    /*
     opt_pat.locsup.clear();
     for(GraphToTracers::iterator it=node.g2tracers.begin();it!=node.g2tracers.end();++it){
       opt_pat.locsup.push_back(it->first);
@@ -205,6 +206,7 @@ bool Gspan::can_prune(Ctree& node){
     ostrs <<pattern;
     ostrs << std::ends;
     opt_pat.dfscode = ostrs.str();
+    */
   }
   return false;
 }
@@ -305,4 +307,16 @@ void Gspan::can_grow_search(){
 
     
   }
+}
+
+void update(DPat& op){
+  op.locsup.clear();
+  for(GraphToTracers::iterator it=op.optimalplace->g2tracers.begin();it!=op.optimalplace->g2tracers.end();++it){
+    op.locsup.push_back(it->first);
+  }
+    std::ostrstream ostrs;
+    ostrs << op.optimalplace->pat.rebuild();
+    ostrs << std::ends;
+    op.dfscode = ostrs.str();
+
 }

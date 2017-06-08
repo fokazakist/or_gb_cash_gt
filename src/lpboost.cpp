@@ -147,11 +147,10 @@ void Gspan::lpboost(){
     
     opt_pat.gain=0.0;//gain init
     opt_pat.size=0;
-    opt_pat.new_node = true;
-    opt_pat.locsup.resize(0);
+    
     pattern.resize(0);
-    opt_pat.dfscode="";
     Crun();
+    update(opt_pat);
     
     std::vector <int>     result (gnum);
     int _y;
