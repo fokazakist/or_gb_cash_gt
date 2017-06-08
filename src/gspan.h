@@ -141,11 +141,13 @@ struct Ctree {
 public:
   nDFSCode pat;
   GraphToTracers g2tracers;
-  double gain;
   double max_gain;
   list<Ctree*> children;
   unsigned int wildcard_res;
   void print();
+  explicit Ctree(){
+    children.resize(0);
+  }
   //void used_node_print();
 };
 
@@ -165,12 +167,7 @@ struct DPat{//discrimination pattern
   double gain;
   bool new_node;
 };
-struct CDPat{//co-occurence discrimination pattern
-  vector<std::string> dfscode;//include string
-  unsigned int size_sum;
-  vector<int> locsup;
-  double gain;
-};
+
 class Gspan {
  private:
   bool is_min();
@@ -182,37 +179,25 @@ class Gspan {
   bool out_instances;
   unsigned int minsup;
   unsigned int maxpat;
-  unsigned int p_count;
-  map<int,vector<int> > freq;
-  int wildcard_r;
+  unsigned int wildcard_r;
   vector<Graph>   gdata;
   vector<DFSCode> pattern;
   void set_data(std::istream& is) {
     gdata = readGraphs(is);
   };
-
-  //void edge_grow(GraphToTracers&,Ctree&);
-  //void edge_grow(GraphToTracers&,CRoot&);
+  
   void edge_grow(Ctree&);
   void report(GraphToTracers&);
   void first_tree_make();
-  //void cash_tsearch(GraphToTracers&,Ctree&);
-  //void gcalc_tsearch(GraphToTracers&,Ctree&);
 
   //lpboost
   vector<double> weight;
   vector<double> corlab; 
   unsigned int max_itr;
   DPat opt_pat;
-  CDPat opt_pat_cooc;
   double wbias;
   double nu;
-  unsigned int coocitr;
   double conv_epsilon;
-  bool end_of_cooc;
-  bool is_nomal;
-  //bool can_prune(GraphToTracers&);
-  //bool can_prune(GraphToTracers&,Ctree&);
   bool can_prune(Ctree&);
   void lpboost();
 
@@ -222,14 +207,7 @@ class Gspan {
   list<Ctree*> search_nodes;
   unsigned int TNnum;
   void Crun();
-  
-  
-  //void cooc_tsearch(GraphToTracers&,Ctree&);
-  //bool cooc_tsearch(GraphToTracers&,Ctree&,GraphToTracers&,Ctree&);
-  bool cooc_is_opt;
-  //void coocsearch();
-  bool need_to_cooc;
-  //only_cooc_search()
+
   void CashTree_search();
   void node_search(Ctree&);
   list<Ctree*> can_grow;

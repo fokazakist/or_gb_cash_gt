@@ -22,12 +22,10 @@ int main(int argc, char **argv) {
   unsigned int maxitr = 500000;
   double nu = 0.4; 
   double conv_epsilon = 1e-2;
-  unsigned int coocitr = maxitr;
-  bool end_of_cooc = false;
-  bool is_nomal = true;
+
   //clock_t allstart, allend;
 
-  while ((opt = getopt(argc, argv, "m:p:w:e:oc:n:x:ia")) != -1) {
+  while ((opt = getopt(argc, argv, "m:p:w:e:n:x:i")) != -1) {
     switch (opt) {
     case 'm':
       minsup = atoi (optarg);
@@ -39,14 +37,8 @@ int main(int argc, char **argv) {
     case 'n':
       nu = atof(optarg);
       break;
-    case 'c':
-      coocitr = atoi(optarg);
-      break;
     case 'e':
       conv_epsilon = atof(optarg);
-      break;
-    case 'o':
-      end_of_cooc = true;
       break;
     case 'x':
       maxpat = atoi (optarg);
@@ -56,9 +48,6 @@ int main(int argc, char **argv) {
       break;
     case 'i':
       out_instances = true;
-      break;
-    case 'a':
-      is_nomal = false;
       break;
     default:
       std::cerr << "Usage: "<< argv[0] << OPT<< std::endl;
@@ -86,11 +75,8 @@ int main(int argc, char **argv) {
   gspan.minsup = minsup;
   gspan.nu = nu;
   gspan.conv_epsilon = conv_epsilon;
-  gspan.coocitr = coocitr;
-  gspan.end_of_cooc = end_of_cooc;
-  gspan.is_nomal = is_nomal;
   if(percent==true){
-    gspan.minsup = gspan.gdata.size() * minp /100;
+    gspan.minsup = gspan.gdata.size() * minp / 100;
   }
   gspan.lpboost();
   
@@ -127,9 +113,7 @@ void Gspan::lpboost(){
   wbias=0.0;
   Hypothesis model;
   first_flag=true;
-  need_to_cooc = false;
-  cooc_is_opt = false;
-  
+
   std::cout.setf(std::ios::fixed,std::ios::floatfield);
   std::cout.precision(8);
   
@@ -160,7 +144,6 @@ void Gspan::lpboost(){
   //main loop
   for(unsigned int itr=0;itr < max_itr;++itr){
     std::cout <<"itrator : "<<itr+1<<std::endl;
-    if(itr==coocitr) need_to_cooc=true;
     
     opt_pat.gain=0.0;//gain init
     opt_pat.size=0;
@@ -169,27 +152,18 @@ void Gspan::lpboost(){
     pattern.resize(0);
     opt_pat.dfscode="";
     Crun();
-    //std::cout<<opt_pat.gain<<"  :"<<opt_pat.dfscode<<std::endl;
+    
     std::vector <int>     result (gnum);
     int _y;
     vector<int> locvec;
     std::string dfscode;
-    if(cooc_is_opt == false){
-      _y = opt_pat.gain > 0 ? +1 :-1;
-      locvec =opt_pat.locsup;
-      dfscode=opt_pat.dfscode;
-    }else{
-      _y = opt_pat_cooc.gain > 0 ? +1 :-1;
-      locvec =opt_pat_cooc.locsup;
-      dfscode=opt_pat_cooc.dfscode[0]+"\t"+opt_pat_cooc.dfscode[1];//=opt_pat_cooc.dfscode;
-      
-    }
+    _y = opt_pat.gain > 0 ? +1 :-1;
+    locvec =opt_pat.locsup;
+    dfscode=opt_pat.dfscode;
+
     
     //print new hypo pattern
     std::cout<<opt_pat.gain<<"  :"<<opt_pat.locsup.size()<<" *  "<<opt_pat.dfscode<<std::endl;
-    /*if(cooc_is_opt){
-      std::cout<<"    cooc  "<<opt_pat_cooc.gain<<"  :"<<opt_pat_cooc.locsup.size()<<" *  "<<opt_pat_cooc.dfscode[0]+"\t"+opt_pat_cooc.dfscode[1]<<std::endl;
-      }*/
    
     model.flag.resize(itr+1);
     model.flag[itr]=_y;
@@ -208,8 +182,8 @@ void Gspan::lpboost(){
       std::cout << "*********************************" << std::endl;
       std::cout << "Convergence ! at iteration: " << itr+1 << std::endl;
       std::cout << "*********************************" << std::endl;
-      if(!end_of_cooc || need_to_cooc == true){ litr = itr; break;}
-      need_to_cooc = true;
+      litr = itr;
+      break;
     }
       
     lpx_add_rows(lp,1); // Add one row constraint s.t. sum( uyh - beta ) <= 0
@@ -247,24 +221,7 @@ void Gspan::lpboost(){
     for (unsigned int i = 0; i < gnum; ++i){
       wbias += corlab[i] * weight[i];
     }
-    /*
-    std::ofstream os (out);
-    if (! os) {
-      std::cerr << "FATAL: Cannot open output file: " << out << std::endl;
-      return;
-    }
-    os.setf(std::ios::fixed,std::ios::floatfield);
-    os.precision(12);
 
-
-    std::vector<float> pred(gnum);
-    std::fill (pred.begin (), pred.end(), 0.0);
-    for (unsigned int r = 0; r < itr; ++r){
-      model.weight[r] = - lpx_get_row_dual(lp, ROW(r+1));
-      if(model.weight[r] < 0) model.weight[r] = 0; // alpha > 0
-      os << model.flag[r] * model.weight[r] << "\t" << model.dfs_vector[r] << std::endl;
-    }
-    */
     std::cout << "After iteration " << itr+1 << std::endl;
     std::cout << "Margin: " << margin << std::endl;
     std::cout << "Margin Error: " << margin_error << std::endl;
