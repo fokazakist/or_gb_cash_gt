@@ -52,8 +52,6 @@ void Gspan::first_tree_make(){
   /***   init CRoot         ***/
   croot = new CRoot;
   TNnum = 1;
-  croot->one_edge_graphs.resize(0);
-
   /****  construct CRoot   ****/
   map<Triplet,GraphToTracers> heap;
   for(unsigned int gid = 0; gid < gdata.size(); ++gid){
@@ -197,16 +195,6 @@ bool Gspan::can_prune(Ctree& node){
     opt_pat.gain = gain;
     opt_pat.optimalplace = &node;
     opt_pat.size = pattern.size();
-    /*
-    opt_pat.locsup.clear();
-    for(GraphToTracers::iterator it=node.g2tracers.begin();it!=node.g2tracers.end();++it){
-      opt_pat.locsup.push_back(it->first);
-    }
-    std::ostrstream ostrs;
-    ostrs <<pattern;
-    ostrs << std::ends;
-    opt_pat.dfscode = ostrs.str();
-    */
   }
   return false;
 }
@@ -219,13 +207,12 @@ void Gspan::CashTree_search(){
     node_search(*(*it));
     pattern.pop_back();
   }
-
 }
 
 void Gspan::node_search(Ctree& node){
+  
   if(can_prune(node)) { return;}
   if(pattern.size() >= maxpat){ return;}
-  
   if(node.children.size() == 0){
     can_grow.push_back(&node);
   }

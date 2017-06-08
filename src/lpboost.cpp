@@ -7,7 +7,7 @@
 extern "C" {
 #include "../glpk-4.8/include/glpk.h"
 }
-#define OPT " [-m minsup] [-x maxpat] [-w wildcard] [-n v] [-e conv_epsilon] [-c coocitr] [-o] graph-file"
+#define OPT " [-m minsup] [-x maxpat] [-w wildcard] [-n v] [-e conv_epsilon] [-o] graph-file"
 #define ROW(i) ((i)+1)
 #define COL(j) ((j)+1)
 
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
   }
   gspan.lpboost();
   
-  std::cout << "Given options::" << "maxpat: " << maxpat << " minsup: " << minsup << " nu: " << nu << " conv_epsilon: " << conv_epsilon <<"cooc position: "<</*coocitr!=maxitr? coocitr:end_of_cooc?"after conv":"Not cooc"<<*/ " maxitr: " << maxitr << std::endl;
+  std::cout << "Given options::" << "maxpat: " << maxpat << " minsup: " << gspan.minsup << " nu: " << nu << " conv_epsilon: " << conv_epsilon <<" maxitr: " << maxitr << std::endl;
   Rdelete(gspan.croot);
   return 0;
 }
@@ -140,42 +140,43 @@ void Gspan::lpboost(){
 		       
   double beta = 0.0;
   double margin = 0.0;
-  unsigned int litr = 0;
+  unsigned int litr = 0; // the number of iterations
+  
   //main loop
   for(unsigned int itr=0;itr < max_itr;++itr){
     std::cout <<"itrator : "<<itr+1<<std::endl;
     
     opt_pat.gain=0.0;//gain init
     opt_pat.size=0;
-    
     pattern.resize(0);
-    Crun();
-    update(opt_pat);
+    
+    Crun(); //search optimal pattern
+    update(opt_pat); //rewrite opt_pat
     
     std::vector <int>     result (gnum);
     int _y;
-    vector<int> locvec;
-    std::string dfscode;
+    vector<int> locvec  = opt_pat.locsup;
+    std::string dfscode = opt_pat.dfscode;
+    // _y is omega
     _y = opt_pat.gain > 0 ? +1 :-1;
-    locvec =opt_pat.locsup;
-    dfscode=opt_pat.dfscode;
-
     
-    //print new hypo pattern
-    std::cout<<opt_pat.gain<<"  :"<<opt_pat.locsup.size()<<" *  "<<opt_pat.dfscode<<std::endl;
+    //print new hypo 
+    std::cout << opt_pat.gain << " : " << opt_pat.locsup.size();
+    std::cout << " *  " << opt_pat.dfscode << std::endl;
    
     model.flag.resize(itr+1);
-    model.flag[itr]=_y;
-    model.tmp[itr]=locvec;
+    model.flag[itr] = _y;
+    model.tmp[itr]  = locvec;
 
-    std::fill (result.begin (), result.end(), -_y);
-    for (unsigned int i = 0; i < locvec.size(); ++i) result[locvec[i]] = _y;
+    std::fill(result.begin (), result.end(), -_y);
+    for (unsigned int i = 0; i < locvec.size(); ++i){ result[locvec[i]] = _y;}
     double uyh = 0;
     for (unsigned int i = 0; i < gnum;  ++i) { // summarizing hypotheses
       uyh += weight[i]*corlab[i]*result[i];
     }
       
-    std::cout << "Stopping criterion: " << uyh << "<=?" << beta << " + " << conv_epsilon << std::endl;
+    std::cout << "Stopping criterion: " << uyh << "<=?";
+    std::cout << beta << " + " << conv_epsilon << std::endl;
 
     if( (uyh <= beta + conv_epsilon ) ){
       std::cout << "*********************************" << std::endl;
@@ -225,6 +226,8 @@ void Gspan::lpboost(){
     std::cout << "Margin: " << margin << std::endl;
     std::cout << "Margin Error: " << margin_error << std::endl;
   }
+
+  // output model
   std::ofstream os (out);
   if (! os) {
     std::cerr << "FATAL: Cannot open output file: " << out << std::endl;
@@ -232,8 +235,7 @@ void Gspan::lpboost(){
   }
   os.setf(std::ios::fixed,std::ios::floatfield);
   os.precision(12);
-
-
+  
   std::vector<float> pred(gnum);
   std::fill (pred.begin (), pred.end(), 0.0);
   for (unsigned int r = 0; r < litr; ++r){

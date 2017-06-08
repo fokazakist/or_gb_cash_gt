@@ -153,6 +153,9 @@ public:
 
 struct CRoot {
   list<Ctree*> one_edge_graphs;
+  explicit CRoot(){
+    one_edge_graphs.resize(0);
+  }
   void print();
 };
 
@@ -161,7 +164,7 @@ void Rdelete(CRoot*);
 const vector<Graph> readGraphs(std::istream&);
 
 struct DPat{//discrimination pattern
-  std::string dfscode;//include string
+  std::string dfscode;
   Ctree* optimalplace;
   unsigned int size;
   vector<int> locsup;
@@ -187,10 +190,7 @@ class Gspan {
   void set_data(std::istream& is) {
     gdata = readGraphs(is);
   };
-  
-  void edge_grow(Ctree&);
   void report(GraphToTracers&);
-  void first_tree_make();
 
   //lpboost
   vector<double> weight;
@@ -202,17 +202,17 @@ class Gspan {
   double conv_epsilon;
   bool can_prune(Ctree&);
   void lpboost();
-
+  void edge_grow(Ctree&);
   //cashing
-  CRoot* croot;
+  
   bool first_flag;
-  list<Ctree*> search_nodes;
   unsigned int TNnum;
-  void Crun();
-
-  void CashTree_search();
-  void node_search(Ctree&);
+  CRoot* croot;
   list<Ctree*> can_grow;
+  void first_tree_make();
+  void CashTree_search();
+  void Crun();
+  void node_search(Ctree&);
   void can_grow_search();
 };
 
